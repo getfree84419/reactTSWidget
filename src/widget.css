@@ -1,0 +1,6 @@
+/* Widget specific styles - ensures widget doesn't interfere with host page */
+#registration-widget-container {
+  width: 100%;
+  min-height: 100%;
+}
+

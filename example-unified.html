@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>統一 Widget 使用示例</title>
+  
+  <!-- RequireJS -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js"></script>
+  
+  <!-- 統一的 Widget 樣式（只需要一個 CSS 文件） -->
+  <link rel="stylesheet" href="./dist/widget/all-widgets.css">
+  
+  <!-- React 和 ReactDOM -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  
+  <!-- 統一的 Widget 文件（只需要一個 JS 文件） -->
+  <script src="./dist/widget/all-widgets.umd.js"></script>
+  
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background-color: #f5f5f5;
+    }
+    .widget-section {
+      background: white;
+      padding: 20px;
+      margin-bottom: 30px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .widget-section h2 {
+      margin-top: 0;
+      color: #333;
+      border-bottom: 2px solid #667eea;
+      padding-bottom: 10px;
+    }
+    .controls {
+      margin-bottom: 20px;
+    }
+    .controls button {
+      margin-right: 10px;
+      padding: 8px 16px;
+      background: #667eea;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .controls button:hover {
+      background: #5568d3;
+    }
+  </style>
+</head>
+<body>
+  <h1>統一 Widget 使用示例</h1>
+  <p>只需要引入一個 JS 文件和一個 CSS 文件，就可以使用所有 widget！</p>
+  
+  <!-- Widget 1: 首頁註冊表單 -->
+  <div class="widget-section">
+    <h2>首頁註冊表單</h2>
+    <div id="home-registration-widget"></div>
+  </div>
+  
+  <!-- Widget 2: 側邊欄註冊表單 -->
+  <div class="widget-section">
+    <h2>側邊欄註冊表單</h2>
+    <div id="sidebar-registration-widget"></div>
+  </div>
+  
+  <!-- Widget 3: 顯示 Widget -->
+  <div class="widget-section">
+    <h2>註冊記錄</h2>
+    <div class="controls">
+      <button id="refresh-display">重新載入</button>
+    </div>
+    <div id="registration-display-widget"></div>
+  </div>
+
+  <!-- RequireJS 配置和主程序 -->
+  <script>
+    require.config({
+      paths: {
+        'jquery': 'https://code.jquery.com/jquery-3.6.0.min'
+      }
+    });
+
+    require(['jquery'], function($) {
+      $(document).ready(function() {
+        // 方式 1: 使用 WidgetManager（推薦）
+        if (window.WidgetManager) {
+          // 初始化多個註冊表單
+          window.WidgetManager.initRegistrationWidget('home', 'home-registration-widget', {
+            onSuccess: function(data) {
+              console.log('首頁註冊成功:', data);
+              // 更新顯示 widget
+              window.WidgetManager.updateDisplayWidget('display', data);
+            }
+          });
+          
+          window.WidgetManager.initRegistrationWidget('sidebar', 'sidebar-registration-widget', {
+            onSuccess: function(data) {
+              console.log('側邊欄註冊成功:', data);
+              // 更新顯示 widget
+              window.WidgetManager.updateDisplayWidget('display', data);
+            }
+          });
+          
+          // 初始化顯示 widget
+          window.WidgetManager.initDisplayWidget('display', 'registration-display-widget', {
+            emptyMessage: '暫無註冊記錄',
+            onRefresh: function() {
+              console.log('重新載入數據');
+              // 從後端載入數據
+              $.ajax({
+                url: '/api/registrations',
+                method: 'GET',
+                success: function(data) {
+                  window.WidgetManager.updateDisplayWidget('display', data);
+                }
+              });
+            }
+          });
+          
+          // 重新載入按鈕
+          $('#refresh-display').on('click', function() {
+            // 模擬載入數據
+            var mockData = [
+              {
+                username: '使用者1',
+                email: 'user1@example.com',
+                phone: '0912345678',
+                registeredAt: new Date().toISOString()
+              },
+              {
+                username: '使用者2',
+                email: 'user2@example.com',
+                phone: '0987654321',
+                registeredAt: new Date().toISOString()
+              }
+            ];
+            window.WidgetManager.updateDisplayWidget('display', mockData);
+          });
+        }
+        
+        // 方式 2: 直接使用全局 API（也可以）
+        // if (window.RegistrationWidget) {
+        //   window.RegistrationWidget.init({
+        //     containerId: 'home-registration-widget',
+        //     onSuccess: function(data) {
+        //       console.log('註冊成功:', data);
+        //     }
+        //   });
+        // }
+        
+        // if (window.RegistrationDisplayWidget) {
+        //   window.RegistrationDisplayWidget.init({
+        //     containerId: 'registration-display-widget',
+        //     emptyMessage: '暫無註冊記錄'
+        //   });
+        // }
+      });
+    });
+  </script>
+</body>
+</html>
+

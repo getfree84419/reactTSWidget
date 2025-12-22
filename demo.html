@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Widget 完整演示 - CoffeeScript</title>
+
+    <!-- Widget 樣式 -->
+    <link rel="stylesheet" href="./dist/widget/all-widgets.css" />
+
+    <!-- React 和 ReactDOM (必須在 RequireJS 之前載入) -->
+    <script
+      crossorigin
+      src="https://unpkg.com/react@18/umd/react.production.min.js"
+    ></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+    ></script>
+
+    <!-- Widget (必須在 RequireJS 之前載入，使用全局變量模式) -->
+    <script>
+      // 臨時禁用 define，避免 RequireJS 衝突
+      var originalDefine = window.define;
+      window.define = undefined;
+    </script>
+    <script src="./dist/widget/all-widgets.umd.js"></script>
+    <script>
+      // 恢復 define
+      window.define = originalDefine;
+    </script>
+
+    <!-- RequireJS (在 Widget 之後載入) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js"></script>
+
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto",
+          "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans",
+          "Helvetica Neue", sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 20px;
+      }
+
+      .container {
+        max-width: 1400px;
+        margin: 0 auto;
+      }
+
+      .header {
+        text-align: center;
+        color: white;
+        margin-bottom: 30px;
+      }
+
+      .header h1 {
+        font-size: 36px;
+        margin-bottom: 10px;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+      }
+
+      .header p {
+        font-size: 18px;
+        opacity: 0.9;
+      }
+
+      .widgets-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+        gap: 30px;
+        margin-bottom: 30px;
+      }
+
+      .widget-section {
+        background: white;
+        border-radius: 16px;
+        padding: 30px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+      }
+
+      .widget-section:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 50px rgba(0, 0, 0, 0.3);
+      }
+
+      .widget-section h2 {
+        color: #333;
+        font-size: 24px;
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 3px solid #667eea;
+      }
+
+      .widget-section p {
+        color: #666;
+        margin-bottom: 20px;
+        line-height: 1.6;
+      }
+
+      .controls {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+      }
+
+      .btn {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 600;
+        transition: all 0.2s ease;
+        background: #667eea;
+        color: white;
+      }
+
+      .btn:hover {
+        background: #5568d3;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+      }
+
+      .btn:active {
+        transform: translateY(0);
+      }
+
+      .btn-secondary {
+        background: #6b7280;
+      }
+
+      .btn-secondary:hover {
+        background: #4b5563;
+      }
+
+      .btn-success {
+        background: #10b981;
+      }
+
+      .btn-success:hover {
+        background: #059669;
+      }
+
+      .widget-container {
+        min-height: 400px;
+        position: relative;
+      }
+
+      .info-box {
+        background: #f0f9ff;
+        border-left: 4px solid #3b82f6;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+      }
+
+      .info-box h3 {
+        color: #1e40af;
+        margin-bottom: 8px;
+        font-size: 16px;
+      }
+
+      .info-box p {
+        color: #1e3a8a;
+        font-size: 14px;
+        margin: 0;
+      }
+
+      .log-area {
+        background: #1f2937;
+        color: #10b981;
+        padding: 15px;
+        border-radius: 8px;
+        font-family: "Courier New", monospace;
+        font-size: 12px;
+        max-height: 200px;
+        overflow-y: auto;
+        margin-top: 20px;
+      }
+
+      .log-area .log-entry {
+        margin-bottom: 5px;
+        padding: 5px;
+        border-left: 2px solid #10b981;
+        padding-left: 10px;
+      }
+
+      .log-area .log-time {
+        color: #6b7280;
+        margin-right: 10px;
+      }
+
+      @media (max-width: 768px) {
+        .widgets-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .header h1 {
+          font-size: 28px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>🎯 Widget 完整演示</h1>
+        <p>使用 CoffeeScript 管理所有 Widget</p>
+      </div>
+
+      <div class="widgets-grid">
+        <!-- Widget 1: 首頁註冊表單 -->
+        <div class="widget-section">
+          <h2>📝 首頁註冊表單</h2>
+          <p>這是一個註冊表單 widget，用於用戶註冊。</p>
+
+          <div class="info-box">
+            <h3>功能說明</h3>
+            <p>填寫表單後，註冊成功會自動更新顯示 widget 並記錄到日誌中。</p>
+          </div>
+
+          <div class="controls">
+            <button class="btn" id="show-home-widget">顯示</button>
+            <button class="btn btn-secondary" id="hide-home-widget">
+              隱藏
+            </button>
+          </div>
+
+          <div id="home-registration-widget" class="widget-container"></div>
+        </div>
+
+        <!-- Widget 2: 側邊欄註冊表單 -->
+        <div class="widget-section">
+          <h2>📋 側邊欄註冊表單</h2>
+          <p>另一個註冊表單 widget 實例。</p>
+
+          <div class="info-box">
+            <h3>功能說明</h3>
+            <p>可以同時使用多個註冊表單 widget，每個都有獨立的配置。</p>
+          </div>
+
+          <div class="controls">
+            <button class="btn" id="show-sidebar-widget">顯示</button>
+            <button class="btn btn-secondary" id="hide-sidebar-widget">
+              隱藏
+            </button>
+          </div>
+
+          <div id="sidebar-registration-widget" class="widget-container"></div>
+        </div>
+
+        <!-- Widget 3: 顯示 Widget -->
+        <div class="widget-section">
+          <h2>📊 註冊記錄顯示</h2>
+          <p>顯示所有註冊記錄的 widget。</p>
+
+          <div class="info-box">
+            <h3>功能說明</h3>
+            <p>當有新的註冊時，會自動更新顯示。也可以手動重新載入數據。</p>
+          </div>
+
+          <div class="controls">
+            <button class="btn btn-success" id="refresh-display">
+              重新載入
+            </button>
+            <button class="btn" id="show-display-widget">顯示</button>
+            <button class="btn btn-secondary" id="hide-display-widget">
+              隱藏
+            </button>
+          </div>
+
+          <div id="registration-display-widget" class="widget-container"></div>
+        </div>
+
+        <!-- Widget 4: 日誌顯示 -->
+        <div class="widget-section">
+          <h2>📜 操作日誌</h2>
+          <p>所有 widget 的操作記錄。</p>
+
+          <div class="controls">
+            <button class="btn btn-secondary" id="clear-log">清除日誌</button>
+          </div>
+
+          <div id="log-area" class="log-area">
+            <div class="log-entry">
+              <span class="log-time">[系統]</span>
+              <span>等待初始化...</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CoffeeScript 編譯後的 JavaScript -->
+    <script>
+      // RequireJS 配置
+      require.config({
+        paths: {
+          jquery: "https://code.jquery.com/jquery-3.6.0.min",
+        },
+      });
+
+      // 主程序（這裡是編譯後的 CoffeeScript）
+      require(["jquery"], function ($) {
+        $(document).ready(function () {
+          // 日誌函數
+          function addLog(message, type) {
+            type = type || "info";
+            var time = new Date().toLocaleTimeString("zh-TW");
+            var logArea = $("#log-area");
+            var logEntry = $('<div class="log-entry"></div>');
+            logEntry.append('<span class="log-time">[' + time + "]</span>");
+            logEntry.append("<span>" + message + "</span>");
+
+            if (type === "success") {
+              logEntry.css("border-left-color", "#10b981");
+            } else if (type === "error") {
+              logEntry.css("border-left-color", "#ef4444");
+            } else if (type === "warning") {
+              logEntry.css("border-left-color", "#f59e0b");
+            }
+
+            logArea.append(logEntry);
+            logArea.scrollTop(logArea[0].scrollHeight);
+          }
+
+          // 檢查 Widget 是否載入
+          if (!window.WidgetManager) {
+            addLog("錯誤: WidgetManager 未載入！", "error");
+            return;
+          }
+
+          addLog("WidgetManager 已載入，開始初始化...", "success");
+
+          // 初始化首頁註冊表單
+          window.WidgetManager.initRegistrationWidget(
+            "home",
+            "home-registration-widget",
+            {
+              onSubmit: function (data) {
+                addLog(
+                  "首頁表單提交: " + data.username + " (" + data.email + ")",
+                  "info"
+                );
+              },
+              onSuccess: function (data) {
+                addLog(
+                  "✓ 首頁註冊成功: " + data.username + " (" + data.email + ")",
+                  "success"
+                );
+
+                // 更新顯示 widget
+                var displayData = {
+                  username: data.username,
+                  email: data.email,
+                  phone: data.phone,
+                  registeredAt: new Date().toISOString(),
+                };
+                window.WidgetManager.updateDisplayWidget(
+                  "display",
+                  displayData
+                );
+              },
+            }
+          );
+          addLog("首頁註冊表單 widget 已初始化", "success");
+
+          // 初始化側邊欄註冊表單
+          window.WidgetManager.initRegistrationWidget(
+            "sidebar",
+            "sidebar-registration-widget",
+            {
+              onSubmit: function (data) {
+                addLog(
+                  "側邊欄表單提交: " + data.username + " (" + data.email + ")",
+                  "info"
+                );
+              },
+              onSuccess: function (data) {
+                addLog(
+                  "✓ 側邊欄註冊成功: " +
+                    data.username +
+                    " (" +
+                    data.email +
+                    ")",
+                  "success"
+                );
+
+                // 更新顯示 widget
+                var displayData = {
+                  username: data.username,
+                  email: data.email,
+                  phone: data.phone,
+                  registeredAt: new Date().toISOString(),
+                };
+                window.WidgetManager.updateDisplayWidget(
+                  "display",
+                  displayData
+                );
+              },
+            }
+          );
+          addLog("側邊欄註冊表單 widget 已初始化", "success");
+
+          // 初始化顯示 widget
+          window.WidgetManager.initDisplayWidget(
+            "display",
+            "registration-display-widget",
+            {
+              emptyMessage: "暫無註冊記錄，請填寫上方表單進行註冊",
+              onRefresh: function () {
+                addLog("顯示 widget 重新載入數據", "info");
+                // 這裡可以從後端載入數據
+                var mockData = [
+                  {
+                    username: "示例用戶1",
+                    email: "user1@example.com",
+                    phone: "0912345678",
+                    registeredAt: new Date(Date.now() - 86400000).toISOString(),
+                  },
+                  {
+                    username: "示例用戶2",
+                    email: "user2@example.com",
+                    phone: "0987654321",
+                    registeredAt: new Date(
+                      Date.now() - 172800000
+                    ).toISOString(),
+                  },
+                ];
+                window.WidgetManager.updateDisplayWidget("display", mockData);
+                addLog("已載入 " + mockData.length + " 條示例數據", "success");
+              },
+            }
+          );
+          addLog("顯示 widget 已初始化", "success");
+
+          // 控制按鈕事件
+          $("#show-home-widget").on("click", function () {
+            window.WidgetManager.show("home", "registration");
+            addLog("顯示首頁註冊表單", "info");
+          });
+
+          $("#hide-home-widget").on("click", function () {
+            window.WidgetManager.hide("home", "registration");
+            addLog("隱藏首頁註冊表單", "info");
+          });
+
+          $("#show-sidebar-widget").on("click", function () {
+            window.WidgetManager.show("sidebar", "registration");
+            addLog("顯示側邊欄註冊表單", "info");
+          });
+
+          $("#hide-sidebar-widget").on("click", function () {
+            window.WidgetManager.hide("sidebar", "registration");
+            addLog("隱藏側邊欄註冊表單", "info");
+          });
+
+          $("#show-display-widget").on("click", function () {
+            window.WidgetManager.show("display", "display");
+            addLog("顯示註冊記錄", "info");
+          });
+
+          $("#hide-display-widget").on("click", function () {
+            window.WidgetManager.hide("display", "display");
+            addLog("隱藏註冊記錄", "info");
+          });
+
+          $("#refresh-display").on("click", function () {
+            // 觸發顯示 widget 的重新載入
+            if (window.RegistrationDisplayWidget) {
+              // 模擬載入數據
+              var mockData = [
+                {
+                  username: "示例用戶1",
+                  email: "user1@example.com",
+                  phone: "0912345678",
+                  registeredAt: new Date(Date.now() - 86400000).toISOString(),
+                },
+                {
+                  username: "示例用戶2",
+                  email: "user2@example.com",
+                  phone: "0987654321",
+                  registeredAt: new Date(Date.now() - 172800000).toISOString(),
+                },
+              ];
+              window.WidgetManager.updateDisplayWidget("display", mockData);
+              addLog("已載入 " + mockData.length + " 條示例數據", "success");
+            }
+          });
+
+          $("#clear-log").on("click", function () {
+            $("#log-area").empty();
+            addLog("日誌已清除", "warning");
+          });
+
+          // 顯示所有 widget ID
+          setTimeout(function () {
+            var allIds = window.WidgetManager.getWidgetIds();
+            addLog("所有已註冊的 Widget ID: " + allIds.join(", "), "info");
+          }, 500);
+
+          addLog("所有 widget 初始化完成！", "success");
+        });
+      });
+    </script>
+  </body>
+</html>
